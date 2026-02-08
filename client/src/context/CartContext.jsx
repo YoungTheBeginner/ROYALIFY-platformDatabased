@@ -1,12 +1,32 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { formatCurrency } from '../utils/currency';
 
 export const CartContext = createContext();
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
     try {
       const raw = localStorage.getItem('royalify_cart');
-      return raw ? JSON.parse(raw) : [];
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map((item) => {
+        const price = typeof item.price === 'number' ? item.price : 0;
+        const currency = item.currency || 'USD';
+        return {
+          ...item,
+          currency,
+          priceDisplay: formatCurrency(price, { currency })
+        };
+      });
     } catch {
       return [];
     }
@@ -20,7 +40,17 @@ export function CartProvider({ children }) {
     setItems(prev => {
       const found = prev.find(i => i.id === product.id);
       if (found) return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + qty } : i);
-      return [...prev, { id: product.id, name: product.name, price: product.price, priceDisplay: product.priceDisplay, image: product.image, qty }];
+      const price = typeof product.price === 'number' ? product.price : 0;
+      const currency = product.currency || 'USD';
+      return [...prev, {
+        id: product.id,
+        name: product.name,
+        price,
+        priceDisplay: formatCurrency(price, { currency }),
+        currency,
+        image: product.image,
+        qty
+      }];
     });
   }
 

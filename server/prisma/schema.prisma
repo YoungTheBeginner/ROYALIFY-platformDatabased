@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String
+  password String
+  role  String  @default("user") // "admin" or "user"
+  isPremium Boolean @default(false) // Premium membership status
+  premiumSince DateTime? // When user became premium
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id    String     @id @default(cuid())
+  name  String
+  price Int
+  currency String
+  desc  String
+  image String
+  limited Boolean @default(false)
+  stock Int
+  rating Float @default(0) // 0-5 star rating
+  reviews Int @default(0) // number of reviews
+  tags String @default("") // Comma-separated tags
+  published Boolean @default(true) // Admin can publish/unpublish
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id    String     @id @default(cuid())
+  orderId String @unique
+  userId Int
+  total Float
+  items Json
+  customer Json
+  status String @default("completed") // completed, pending, cancelled
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id    String     @id @default(cuid())
+  userId Int
+  productId String
+  rating Int // 1-5 stars
+  title String
+  comment String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId]) // One review per user per product
+}
+
